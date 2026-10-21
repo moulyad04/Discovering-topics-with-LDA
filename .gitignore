@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+*.pyc
+outputs/rubric-page-*.png
+tmp/
+output/pdf/
+exercise5/

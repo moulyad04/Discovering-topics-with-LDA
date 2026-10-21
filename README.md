@@ -1,0 +1,84 @@
+# Exercise 4: Latent Dirichlet Allocation
+
+Advanced Natural Language Processing (AML23702), CO4 / L3.
+
+Apply LDA to a document collection and interpret discovered topics using probabilistic and sampling-based methods. This project implements collapsed Gibbs sampling with NumPy, including burn-in and posterior averaging. All output files are generated from a real run.
+
+## Run
+
+Use Python 3.11 or later in a virtual environment:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python lda_lab.py
+python -m unittest discover -s tests -v
+```
+
+## Topic Atlas website
+
+The complete responsive frontend replaces the simple results-page experience. To open it:
+
+```powershell
+python tools/build_website.py
+python -m http.server 8784 --bind 127.0.0.1 --directory dist
+```
+
+Open http://127.0.0.1:8784. The finished `dist` folder already contains the exported model, so serving it requires only Python; NumPy is required to train or rebuild its data.
+
+- **Topic overview:** interactive theme cards, real topic-word probabilities and representative documents.
+- **Document explorer:** searchable corpus, dominant-topic filters, original text, cleaned token counts and learned document-topic distributions.
+- **Analyze text:** approximate fold-in against the fixed learned topics, with known/unknown vocabulary shown explicitly. This does not retrain LDA.
+- **Methodology:** recorded training settings, probabilistic interpretation, limitations and all required output downloads.
+
+Analysis runs entirely in the browser. The model's vocabulary limits what it can interpret, and out-of-vocabulary words are excluded. The original `outputs/report.html` remains available as a simple generated results summary.
+
+After rerunning training, run `python tools/build_website.py` to refresh the website's data and downloads. Verify the frontend with `node tests/test_frontend.cjs`; the Python test suite also checks its exported distributions against the saved model.
+
+![Topic Atlas website](screenshots/topic-atlas-overview.png)
+
+The new frontend preserves the trained Gibbs-sampling model. Its optional text-analysis feature uses a fixed-topic approximation: initialize a uniform mixture, compute word responsibilities from theta times phi, add alpha to expected counts, normalize, and repeat up to 150 times or until the largest update is below 1e-8. It excludes unknown words and returns no mixture when none match. This is not retraining, exact Bayesian inference, or held-out evaluation.
+
+## Dataset
+
+`data/corpus.csv` contains 32 original educational documents across space, cricket, healthcare, and software. It is intentionally separable and is not an external benchmark. `data/build_corpus.py` regenerates it. Category labels are excluded from training. No private data, online services, or credentials are required.
+
+For another collection, supply a UTF-8 CSV with unique `id` and nonempty `text` columns. An optional `category` column is used only to describe representative documents; review these descriptions manually for heterogeneous data.
+
+```powershell
+python lda_lab.py --input my_documents.csv --output outputs_custom --topics 4 --iterations 600 --seed 42
+```
+
+## Deliverables and rubric alignment
+
+| Requirement | File / evidence |
+|---|---|
+| Problem understanding and scope | README and report aim, assumptions and dataset provenance |
+| Pipeline and methodology | `lda_lab.py`; report conditional sampling equation and priors |
+| Preprocessed corpus | `outputs/preprocessed_corpus.csv` |
+| Document-term representation | `outputs/document_term_matrix.csv` |
+| LDA model output | `outputs/lda_model.npz` (theta, phi, vocabulary, document IDs and priors) |
+| Topic-word lists | `outputs/topic_words.csv` (top ten per topic) |
+| Document-topic distributions | `outputs/document_topics.csv` |
+| Interpretation and limitations | `outputs/interpretation_report.md` |
+| Optional visualisations and demo | `outputs/report.html` |
+| Correctness and reproducibility | fixed seed, saved metrics and unit tests |
+
+Inspect the saved model with `numpy.load('outputs/lda_model.npz', allow_pickle=False)`. `phi[k,w]` is P(word w | topic k); `theta[d,k]` is P(topic k | document d). Each row sums to one. LDA learns distributions, not category predictions. The reported training reconstruction perplexity is not held-out evaluation. Four topics reflect the demonstration design; optimal topic selection and convergence studies remain extensions.
+
+## Demo / viva guide
+
+1. Show one raw document beside its preprocessed tokens and count row.
+2. Explain that each token receives a sampled latent topic assignment.
+3. Explain the document-topic and topic-word count factors in the conditional.
+4. Open the HTML report and interpret words jointly with document examples.
+5. Discuss bag-of-words limitations, synthetic corpus bias, and finite-chain uncertainty.
+
+## Formatted lab report
+
+The formatted PDF report is located at `reports/Exp04_Discovering_Topics_with_LDA.pdf`. It follows the lab report format with Department header (AIML AML23702), blue section headings, Times body text, page numbering, output tables, charts, and filled evaluation sheet.
+
+To regenerate the PDF from the current output arrays, install `requirements-report.txt` and run `python tools/build_report.py` from the repository root.
+
+Repository: https://github.com/moulyad04/Discovering-topics-with-LDA
